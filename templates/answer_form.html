@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- 답글 수정 -->
+<div class="container my-3">
+    <form method="post">
+        {% csrf_token %}
+        {% include "form_errors.html" %}
+        <div class="mb-3">
+            <label for="content" class="form-label">답글내용</label>
+            <textarea class="form-control" name="content" id="content" rows="10">{{ form.content.value|default_if_none:'' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">저장</button>
+    </form>
+</div>
+{% endblock %}
+
+<!-- 템플릿에서 사용한 {{ form.as_p }}의 form은 question_create 함수에서 전달한 QuestionForm의 객체이다. 
+     {{ form.as_p }}는 폼에 정의한 subject, content 속성에 해당하는 HTML 코드를 자동으로 생성한다. -->
