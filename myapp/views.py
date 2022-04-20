@@ -1,6 +1,6 @@
 from datetime import datetime
 from email.errors import MessageError
-from django.shortcuts import render, HttpResponse, get_object_or_404, redirect
+from django.shortcuts import render, HttpResponse, get_object_or_404, redirect, resolve_url
 from django.http import HttpResponseNotAllowed
 from .forms import AnswerForm, QuestionForm
 from .models import Question, Answer
@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 # Create your views here.
 
 # def index(request):
@@ -16,19 +17,28 @@ from django.contrib import messages
 def index(request):
     # 입력 파라미터
     page = request.GET.get('page','1') # 페이지
+    kw = request.GET.get('kw','')
 
     # 질문목록 데이터는 Question.objects.order_by 로 얻어온다.
     # order_by('-create_date')는 작성일시 역순으로 정렬하라
     # "-"기호가 붙으면 역방향 없으면 정방향 게시물은 보통 최신순이므로 역순정렬
     
     question_list = Question.objects.order_by('-create_date') # 조회
-    # context = {'question_list' : question_list}
+    
+    if kw:
+        question_list = question_list.filter(
+            Q(subject__icontains=kw) | # 제목 검색
+            Q(content__icontains=kw) | # 내용 검색
+            Q(answer__content__icontains=kw) | # 답변 내용 검색
+            Q(author__username__icontains=kw) | # 질문 작성자 검색
+            Q(answer__author__username__icontains=kw) # 답글 작성자 검색
+        ).distinct()
     # 페이징 처리
     paginator = Paginator(question_list, 10) # 페이지당 10개씩 보이기
     # 마지막 페이지
     max_index = len(paginator.page_range)
     page_obj = paginator.get_page(page)
-    context = {'question_list' : page_obj, 'max_index':max_index}
+    context = {'question_list' : page_obj, 'max_index':max_index, 'page':page, 'kw':kw}
     return render(request, 'question_list.html', context)
 
 def detail(request, question_id):
@@ -49,7 +59,8 @@ def answer_create(request, question_id):
             answer.create_date = datetime.now()
             answer.question = question
             answer.save()
-            return redirect('myapp:detail', question_id=question.id)
+            return redirect('{}#answer_{}'.format(
+                resolve_url('myapp:detail', question_id=question.id), answer.id))
     else:
         return HttpResponseNotAllowed('Only POST is possible.')
     context = {'question':question , 'form':form}
@@ -108,14 +119,16 @@ def answer_modify(request, answer_id):
     answer = get_object_or_404(Answer, pk=answer_id)
     if request.user != answer.author:
         messages.error(request, "수정권한이 없습니다.")
-        return redirect("myapp:detail", question_id=answer.question.id)
+        return redirect('{}#answer_{}'.format(
+            resolve_url("myapp:detail", question_id=answer.question.id), answer.id))
     if request.method == "POST":
         form = AnswerForm(request.POST, instance=answer)
         if form.is_valid():
             answer = form.save(commit=False)
             answer.modify = timezone.now()
             answer.save()
-            return redirect("myapp:detail", question_id=answer.question.id)
+            return redirect('{}#answer_{}'.format(
+                resolve_url("myapp:detail", question_id=answer.question.id), answer.id))
     else:
         form = AnswerForm(instance=answer)
     context = {"answer":answer, "form":form}
@@ -129,7 +142,8 @@ def answer_delete(request,answer_id):
         messages.error(request, "삭제 권한이 없습니다.")
     else:
         answer.delete()
-    return redirect('myapp:detail', question_id=answer.question.id)
+    return redirect('{}#answer_{}'.format(
+        resolve_url('myapp:detail', question_id=answer.question.id),answer.id))
 
 # 질문 추천
 @login_required(login_url="common:login")
@@ -149,4 +163,5 @@ def answer_vote(request, answer_id):
         messages.error(request, "자신이 작성한 글은 추천할 수 없습니다.")
     else:
         answer.voter.add(request.user)
-    return redirect("myapp:detail", question_id=answer.question.id)
+    return redirect('{}#answer_{}'.format(
+        resolve_url("myapp:detail", question_id=answer.question.id),answer.id))
