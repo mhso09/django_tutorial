@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 class Question(models.Model):
     subject = models.CharField(max_length=200) # 제목(최대글자수)
     content = models.TextField() # 내용
-    create_date = models.DateTimeField() # 작성일
+    create_date = models.DateTimeField(auto_now_add=True) # 작성일
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='author_question') # 작성자
     modify_date = models.DateTimeField(null=True, blank=True) # 수정일
     voter = models.ManyToManyField(User, related_name='voter_question') # 추천인
@@ -21,7 +21,7 @@ class Question(models.Model):
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     content = models.TextField()
-    create_date = models.DateTimeField()
+    create_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='author_answer')
     modify_date = models.DateTimeField(null=True, blank=True)
     voter = models.ManyToManyField(User, related_name='voter_answer')
