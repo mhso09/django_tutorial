@@ -17,7 +17,7 @@ from django.db.models import Q
 def index(request):
     # 입력 파라미터
     page = request.GET.get('page','1') # 페이지
-    kw = request.GET.get('kw','')
+    kw = request.GET.get('kw',"")
 
     # 질문목록 데이터는 Question.objects.order_by 로 얻어온다.
     # order_by('-create_date')는 작성일시 역순으로 정렬하라
