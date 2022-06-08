@@ -23,6 +23,7 @@
         <thead>
             <tr class="text-center thead-dark">
                 <th>번호</th>
+                <th>추천수</th>
                 <th style="width:50%">제목</th>
                 <th>작성자</th>
                 <th>작성일시</th>
@@ -36,12 +37,18 @@
                 <td>
                     {{ question_list.paginator.count|sub:question_list.start_index|sub:forloop.counter0|add:1 }}
                 </td>
+                <td>
+                    <!-- 추천인 수 체크 -->
+                    {% if question.voter.all.count > 0 %}
+                    <span class="badge badge-warning px-2 py-1"> {{ question.voter.all.count }}</span>
+                    {% endif %}
+                </td>
                 <td class="text-left">
                     <a href="{% url 'myapp:detail' question.id %}">{{ question.subject }}</a>
                     <!-- 답변이 있는 경우를 검사 -->
                     {% if question.answer_set.count > 0 %}
                     <!-- 답변 개수를 표시 -->
-                    <span class="text-danger small mx-6">{{ question.answer_set.count }}</span>
+                    <span class="text-danger small ml-2">{{ question.answer_set.count }}</span>
                     {% endif %}
                 </td>
                 <td>{{ question.author.username }}</td>
@@ -50,7 +57,7 @@
             {% endfor %}
             {% else %}
             <tr>
-                <td colspan="4">질문 없습니다.</td>
+                <td colspan="3">질문 없습니다.</td>
             </tr>
             {% endif %}
         </tbody>
