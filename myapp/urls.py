@@ -23,4 +23,10 @@ urlpatterns = [
          views.answer_modify, name='answer_modify'),
      path('answer/delete/<int:answer_id>', views.answer_delete, name='answer_delete'),
      path('answer/vote/<int:answer_id>', views.answer_vote, name='answer_vote'),
+
+     #comment
+     path('comment/create/<int:question_id>', views.question_comment, name='question_comment'),
+     path('comment/delete/<int:comment_id>',
+          views.comment_question_delete, name='comment_question_delete'),
 ]
+

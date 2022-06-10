@@ -42,27 +42,44 @@
                         </div>
                     </div>
                     {% if request.user == question.author %}
-                    <div class = "my-3"></div>
+                    <div class = "my-3">
                         <a href="{% url 'myapp:question_modify' question.id %}"
                         class="btn btn-sm btn-outline-secondary">수정</a>
                         <a href="javascript:void(0)" class="delete btn btn-sm btn-outline-secondary"
                         data-uri="{% url 'myapp:question_delete' question.id %}">삭제</a>
                     </div>
                     {% endif %}
+                    <!-- 질문 댓글 작성 -->
+                    {% if question.comment_set.count > 0 %}
+                    <div class="mt-3">
+                        {% for comment in question.comment_set.all %}
+                        <!-- 댓글 출력 -->
+                        <div class="comment py-2 text-muted">
+                            <span style="white-space:pre-line;">{{ comment.content}}</span>
+                            <span> - {{ comment.author }}, {{ comment.create_date }}
+                                {% if comment.modify_date %}
+                                (수정:{{ comment.modify_date }})
+                                {% endif %}
+                            </span>
+                            <!-- 수정삭제 버튼 -->
+                            {% if request.user == comment.author %}
+                            <a href="#">수정</a>
+                            <a href="#" class="small delete" data-uri=" {% url 'myapp:comment_question_delete' comment.id %}">삭제</a>
+                            {% endif %}
+                        {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!-- 질문 댓글 버튼 -->
+                    <div class = "my-3">
+                        <a href="{% url 'myapp:question_comment' question.id %}" class="small"><small>댓글추가...</small></a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     <!-- 답글 -->
-    <!-- 이 qestion.answer_set을 사용하면 질문에 연결된 답변을 가져올 수 있다.
-    Question 모델에는 answer_set 이라는 속성이 없지만 Answer 모델에 Question 모델이 ForignKey로 연결되어 있기
-    때문에 q.answer_set 과 같은 역방향 접근이 가능하다.
-    
-    연결모델명_set(예:answer_set)은 상식적으로 생각하면 더 쉽다. 질문 하나에는 여러개의 답변이 가능하므로 q.answer_set이 가능하지만 답변 하나에는 여러개의 질문이 있을 수 없으므로
-    a.question_set은 불가능하다. 답변 하나에는 질문 하나만 가능하기 때문에 a.question만 가능하다.
-    
-    정말 신통방통한 장고의 기능이 아닐수 없다. 연결모델명_set 방법은 자주 사용하니 꼭 기억해 두도록 하자. -->
-    <h5 class="border-bottom my-3 py-2">{{ question.answer_set.count }}개의 답변이 있습니다.</h5>
+    <h5 class="border-bottom my-2 py-2">{{ question.answer_set.count }}개의 답변이 있습니다.</h5>
     {% for answer in question.answer_set.all %}
     <a id="answer_{{ answer.id }}"></a>
     <div class="card my-3">

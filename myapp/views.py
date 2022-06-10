@@ -2,8 +2,8 @@ from datetime import datetime
 from email.errors import MessageError
 from django.shortcuts import render, HttpResponse, get_object_or_404, redirect, resolve_url
 from django.http import HttpResponseNotAllowed
-from .forms import AnswerForm, QuestionForm
-from .models import Question, Answer
+from .forms import AnswerForm, QuestionForm, CommentForm
+from .models import Question, Answer, Comment
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
@@ -165,3 +165,32 @@ def answer_vote(request, answer_id):
         answer.voter.add(request.user)
     return redirect('{}#answer_{}'.format(
         resolve_url("myapp:detail", question_id=answer.question.id),answer.id))
+
+# 질문에 대한 댓글
+@login_required(login_url="common:login")
+def question_comment(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.author = request.user
+            comment.create_date = datetime.now()
+            comment.question = question
+            comment.save()
+            return redirect('myapp:detail', question_id=question.id)
+    else:
+        form = CommentForm()
+    context = {'form': form}
+    return render(request, 'comment_form.html', context)
+
+# 답글 삭제
+@login_required(login_url="common:login")
+def comment_question_delete(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    if request.user != comment.author:
+        messages.error(request, "삭제 권한이 없습니다.")
+        return redirect("myapp:detail", question_id=comment.question.id)
+    else:
+        comment.delete()
+    return redirect("myapp:detail", question_id=comment.question.id)
